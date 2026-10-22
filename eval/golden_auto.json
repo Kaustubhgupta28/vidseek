@@ -1,0 +1,206 @@
+[
+ {
+  "q": "VS Code download karne ke baad internet ka arrow ka kya matlab hai?",
+  "expect_video_id": "OSYgRvaWFSI",
+  "expect_around_sec": 402,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "What do the keys and values represent in a hashmap according to the lecture?",
+  "expect_video_id": "9a4A6CbrLCo",
+  "expect_around_sec": 192,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "6 ko 10 se divide karne pe quotient kya aayega?",
+  "expect_video_id": "-gC-QEdpvO4",
+  "expect_around_sec": 478,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Why do we need to check that `fast.next` is not null when using the fast pointer in cycle detection?",
+  "expect_video_id": "RNpZBhZBtJc",
+  "expect_around_sec": 998,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Java mein heap ko kya kaha jata hai?",
+  "expect_video_id": "_1AbrkD8pak",
+  "expect_around_sec": 1387,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Why does the closing value have to be less than the opening value, and why can’t a closing bracket be used when it equals the opening value?",
+  "expect_video_id": "PqwlS4bcr1Y",
+  "expect_around_sec": 1073,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Do cows ko aise kaise place karein ki unke beech ka distance maximum ho?",
+  "expect_video_id": "TF53eWL47ws",
+  "expect_around_sec": 2012,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Which elements of the array belong to part one and which belong to part two?",
+  "expect_video_id": "91qkzhmEO48",
+  "expect_around_sec": 653,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Kya hum us row ko binary search se search kar sakte hain jab uska first value target value se chhota ho?",
+  "expect_video_id": "stji3QvQ-OU",
+  "expect_around_sec": 745,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "What should the before.next pointer be set to during the reversal?",
+  "expect_video_id": "7gOCx1vbx0k",
+  "expect_around_sec": 1934,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Decision lete waqt kisi cheez ko ignore karna chahiye ya nahi, kaise decide karein?",
+  "expect_video_id": "jIz4zcFuUU8",
+  "expect_around_sec": 709,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "What defines a leaf node in a tree?",
+  "expect_video_id": "Sat-0sqezpM",
+  "expect_around_sec": 199,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Recursion mein n=4 ka answer kaise calculate hota hai?",
+  "expect_video_id": "HdPb_thlF5s",
+  "expect_around_sec": 856,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "How does an inorder traversal visit the nodes of a binary search tree?",
+  "expect_video_id": "5PrzZfhk1OQ",
+  "expect_around_sec": 162,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "k=2 ki window me high pointer ka index kya hota hai?",
+  "expect_video_id": "DL8LSXUsfWE",
+  "expect_around_sec": 1694,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Why is backtracking considered essential for solving most DP and graph problems?",
+  "expect_video_id": "Qh_U6NYf99o",
+  "expect_around_sec": 55,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "For loop me i ko kaise increment karte hain?",
+  "expect_video_id": "oFwHwCkSoGw",
+  "expect_around_sec": 1815,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "How does using DFS help determine whether a graph can be properly bipartite‑colored?",
+  "expect_video_id": "LIGrIglQ7TY",
+  "expect_around_sec": 990,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Start aur stop events ko alag pehchaanne ke liye pair array me kaunse numbers insert karte hain?",
+  "expect_video_id": "o-ozvzzFpKA",
+  "expect_around_sec": 1060,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Why should we start a dry run of the code using a small three‑node tree before testing it on a larger tree?",
+  "expect_video_id": "nkWopJZsqXc",
+  "expect_around_sec": 967,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Kya hume dono A elements ko alag alag pop karna zaroori hai ya ek saath pop kar sakte hain?",
+  "expect_video_id": "mMKZmo3iyyM",
+  "expect_around_sec": 2670,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Do you need to learn every English word in order to speak and understand the language?",
+  "expect_video_id": "qH2VQY48mg4",
+  "expect_around_sec": 126,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Dono ki frequency 1 ho to seat pe kaun bithaana chahiye?",
+  "expect_video_id": "SCe8N_v-8Ls",
+  "expect_around_sec": 547,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "What is the answer for a path that must contain exactly one turning point?",
+  "expect_video_id": "_V7J7exlyzk",
+  "expect_around_sec": 1207,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Level size ka matlab queue mein kitne log rakhe jayenge?",
+  "expect_video_id": "-g6h0Ok1Buk",
+  "expect_around_sec": 1302,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "How do we decide which child should be placed in seat 1?",
+  "expect_video_id": "1yax0YQOb8w",
+  "expect_around_sec": 855,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "K‑1 times ka count kaise badha sakte hain?",
+  "expect_video_id": "mMKZmo3iyyM",
+  "expect_around_sec": 3015,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "What variable should be used to keep track of the current index while iterating through an array?",
+  "expect_video_id": "IKfIT6uFOcs",
+  "expect_around_sec": 161,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "Recursion likhna itna aasan hai, par samajhne mein itni mushkil kyun lagti hai?",
+  "expect_video_id": "HdPb_thlF5s",
+  "expect_around_sec": 1279,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "What should a level‑order traversal function return when the tree’s root is null?",
+  "expect_video_id": "-g6h0Ok1Buk",
+  "expect_around_sec": 819,
+  "tolerance_sec": 45
+ },
+ {
+  "q": "React hooks kaise kaam karte hain?",
+  "expect_refusal": true
+ },
+ {
+  "q": "Football world cup kisne jeeta?",
+  "expect_refusal": true
+ },
+ {
+  "q": "biryani ki recipe batao",
+  "expect_refusal": true
+ },
+ {
+  "q": "Bitcoin ka price kya hai?",
+  "expect_refusal": true
+ },
+ {
+  "q": "Django me models kaise banate hain?",
+  "expect_refusal": true
+ },
+ {
+  "q": "CNN neural network kya hota hai?",
+  "expect_refusal": true
+ }
+]

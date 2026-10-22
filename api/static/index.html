@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VidSeek</title>
+<style>
+:root{--bg:#f6f5f1;--ink:#17202a;--mute:#66707a;--line:#d9d6cc;--acc:#1f4fd8;--card:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#12161c;--ink:#e8eaed;--mute:#98a1ab;--line:#2a313a;--acc:#7b9cff;--card:#1a2029}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Georgia,serif}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 16px;display:grid;gap:24px;grid-template-columns:1fr 1fr}
+@media(max-width:800px){.wrap{grid-template-columns:1fr}}
+h1{font-size:2rem;margin:0}p.sub{color:var(--mute);margin:.2rem 0 1rem}
+input,button{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink)}
+input{width:100%}button{cursor:pointer;background:var(--acc);color:#fff;border-color:var(--acc)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.row{display:flex;gap:8px;margin-bottom:10px}.row input{flex:1}
+#player{aspect-ratio:16/9;width:100%;background:#000;border-radius:6px}
+.ans{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px;margin-top:14px;white-space:pre-wrap}
+.src{display:flex;gap:10px;align-items:flex-start;border-left:3px solid var(--acc);padding:6px 10px;margin:10px 0;background:var(--card)}
+.src small{color:var(--mute);display:block}.src button{padding:4px 10px;white-space:nowrap}
+#status,#vids{color:var(--mute);font-size:.9rem}
+</style></head><body><div class="wrap">
+<section>
+  <h1>VidSeek</h1><p class="sub">Add a YouTube video or playlist, then ask your doubt.</p>
+  <div class="row"><input id="url" placeholder="Paste YouTube video or playlist link"><button onclick="add()">Add</button></div>
+  <progress id="bar" value="0" max="1" style="width:100%;display:none"></progress>
+  <div id="status"></div><div id="vids"></div>
+  <div class="row" style="margin-top:16px"><input id="q" placeholder="e.g. memoization aur tabulation ka difference?" onkeydown="if(event.key==='Enter')ask()"><button onclick="ask()">Ask</button></div>
+  <div id="out"></div>
+</section>
+<section><div id="player"></div></section>
+</div>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+let player,pending=null;
+function onYouTubeIframeAPIReady(){player=new YT.Player('player',{width:'100%',height:'100%',playerVars:{origin:location.origin,rel:0},events:{onReady:()=>{if(pending)jump(...pending)}}})}
+function jump(v,t){if(!player||!player.loadVideoById){pending=[v,t];return}player.loadVideoById({videoId:v,startSeconds:t})}
+const $=id=>document.getElementById(id);
+const fmt=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+async function api(path,body){const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:undefined);
+  const j=await r.json();if(!r.ok)throw new Error(j.detail||"Something went wrong");return j}
+async function loadVids(){const v=await api("/api/videos");$("vids").textContent=v.length?`${v.length} video(s) indexed`:"No videos yet."}
+let timer=null;
+function render(p){const bar=$("bar");bar.style.display=p.total?"block":"none";bar.max=p.total||1;bar.value=p.done;
+  $("status").textContent=`${p.done}/${p.total} video done | ${p.failed} failed`+(p.current?` | abhi: ${p.current}`:"")+(p.stopped?` | ${p.stopped}`:"")+(p.last_error?` | last error: ${p.last_error}`:"")}
+function poll(){clearInterval(timer);timer=setInterval(async()=>{try{const p=await api("/api/progress");render(p);loadVids();if(!p.running){clearInterval(timer);$("status").textContent+=" | KHATAM"}}catch(e){}},3000)}
+async function add(){const url=$("url").value.trim();if(!url)return;$("status").textContent="Shuru ho raha hai...";
+  try{await api("/api/ingest",{url});poll()}catch(e){$("status").textContent=e.message}}
+async function ask(){const question=$("q").value.trim();if(!question)return;$("out").innerHTML="<p>Searching...</p>";
+  try{const r=await api("/api/ask",{question});const box=document.createElement("div");
+    const a=document.createElement("div");a.className="ans";a.textContent=r.answer;box.append(a);
+    r.sources.forEach((s,i)=>{const d=document.createElement("div");d.className="src";
+      d.innerHTML=`<div style="flex:1"><b>[${i+1}]</b> <span class="t"></span><small class="x"></small></div>`;
+      d.querySelector(".t").textContent=s.title;d.querySelector(".x").textContent=s.text.slice(0,140)+"...";
+      const b=document.createElement("button");b.textContent="Jump to "+fmt(s.start);b.onclick=()=>jump(s.vid,s.start);d.append(b);const o=document.createElement('a');o.href=s.link;o.target='_blank';o.rel='noopener';o.textContent='Open on YouTube';o.style.cssText='font-size:.85rem;color:var(--acc);white-space:nowrap;align-self:center';d.append(o);box.append(d)});
+    $("out").innerHTML="";$("out").append(box)}catch(e){$("out").textContent=e.message}}
+loadVids();
+api("/api/progress").then(p=>{if(p.running){render(p);poll()}}).catch(()=>{});
+</script></body></html>

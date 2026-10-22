@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+yt-dlp
+faster-whisper
+youtube-transcript-api
+sentence-transformers
+chromadb
+groq
+python-dotenv

@@ -1,0 +1,17 @@
+[
+  {"q": "_NOTE: har sawal ke liye video me check karo ki answer sach me wahan hai. Nahi hai to us line ko delete kar do."},
+
+  {"q": "time complexity kya hoti hai aur kaise nikalte hain?", "expect_video_id": "oFwHwCkSoGw"},
+  {"q": "Big O notation ka matlab kya hai?", "expect_video_id": "oFwHwCkSoGw"},
+  {"q": "DSA patterns ka roadmap beginner se advanced tak kya hai?", "expect_video_id": "S8tpzqrwnHk"},
+  {"q": "DSA seekhne ka best tarika kya hai?", "expect_video_id": "qH2VQY48mg4"},
+  {"q": "two pointers pattern ke interview questions kaun se hain?", "expect_video_id": "rM9EthMlXnw"},
+  {"q": "sorted array me duplicates two pointer se kaise remove karte hain?", "expect_video_id": "PvyEr3CeKzE", "expect_around_sec": 1428, "tolerance_sec": 150},
+
+  {"q": "React hooks kaise kaam karte hain?", "expect_refusal": true},
+  {"q": "Football world cup kisne jeeta?", "expect_refusal": true},
+  {"q": "biryani ki recipe batao", "expect_refusal": true},
+  {"q": "Bitcoin ka price kya hai?", "expect_refusal": true},
+  {"q": "Django me models kaise banate hain?", "expect_refusal": true},
+  {"q": "CNN neural network kya hota hai?", "expect_refusal": true}
+]
