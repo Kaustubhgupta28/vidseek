@@ -24,4 +24,5 @@ MAX_PER_ADD = int(os.getenv("MAX_PER_ADD", "1000"))
 # retrieval / answer
 TOP_K = 5
 MAX_DISTANCE = float(os.getenv("MAX_DISTANCE", "0.15"))
+READ_ONLY = os.getenv("READ_ONLY", "0") == "1"  # deploy demo: no adding videos
 REFUSAL = "Ye topic is video/playlist mein cover nahi hua."
