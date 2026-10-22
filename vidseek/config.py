@@ -1,38 +1,27 @@
-"""Segments -> time-window chunks. Hand-written so the timestamp survives (generic text
-splitters concatenate text and lose it). Overlap, title prefix, junk filter."""
-import re
-from collections import Counter
-from vidseek.config import MIN_WORDS, OVERLAP, WINDOW
+"""All settings in one place. Secrets/overrides come from .env"""
+import os
+from pathlib import Path
+from dotenv import load_dotenv
 
+ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(ROOT / ".env")
 
-def is_repetitive(text, th=0.6):
-    """Whisper loop hallucination: one sentence repeated most of the chunk."""
-    sents = [s.strip().lower() for s in re.split(r"[.!?\n]+", text) if s.strip()]
-    if len(sents) < 3:
-        return False
-    return Counter(sents).most_common(1)[0][1] / len(sents) >= th
+CHROMA_PATH = str(ROOT / "chroma_db")
+TRANSCRIPT_DIR = ROOT / "transcripts"
+TRANSCRIPT_DIR.mkdir(exist_ok=True)
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+LLM_MODEL = "openai/gpt-oss-120b"
+EMBED_MODEL = "intfloat/multilingual-e5-small"
 
-def make_chunks(snips, title):
-    """-> [(start_sec, end_sec, text)]"""
-    snips = [s for s in snips if s["text"].strip()]
-    chunks, i = [], 0
-    while i < len(snips):
-        t0 = snips[i]["start"]
-        j = i
-        while j < len(snips) and snips[j]["start"] - t0 < WINDOW:
-            j += 1
-        body = " ".join(s["text"].strip() for s in snips[i:j])
-        if len(body.split()) >= MIN_WORDS and not is_repetitive(body):
-            # title prefix: a chunk from minute 34 rarely restates its topic
-            chunks.append((int(t0), int(snips[j - 1]["end"]), f"{title}\n\n{body}"))
-        if j >= len(snips):
-            break
-        t_back = snips[j - 1]["start"] - OVERLAP
-        nxt = next((k for k in range(i, j) if snips[k]["start"] >= t_back), j)
-        i = max(nxt, i + 1)
-    # two windows can start in the same second (fractional starts) -> duplicate Chroma IDs; keep the first
-    uniq = {}
-    for c in chunks:
-        uniq.setdefault(c[0], c)
-    return list(uniq.values())
+# chunking
+WINDOW, OVERLAP, MIN_WORDS = 45, 10, 15
+# transcription: auto = captions first, Whisper fallback | whisper = audio only
+TRANSCRIBE_MODE = os.getenv("TRANSCRIBE_MODE", "auto")
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
+WHISPER_LANG = os.getenv("WHISPER_LANG", "") or None
+MAX_PER_ADD = int(os.getenv("MAX_PER_ADD", "1000"))
+# retrieval / answer
+TOP_K = 5
+MAX_DISTANCE = float(os.getenv("MAX_DISTANCE", "0.15"))
+REFUSAL = "Ye topic is video/playlist mein cover nahi hua."

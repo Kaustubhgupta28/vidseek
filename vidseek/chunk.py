@@ -31,4 +31,8 @@ def make_chunks(snips, title):
         t_back = snips[j - 1]["start"] - OVERLAP
         nxt = next((k for k in range(i, j) if snips[k]["start"] >= t_back), j)
         i = max(nxt, i + 1)
-    return chunks
+    # two windows can start in the same second (fractional starts) -> duplicate Chroma IDs; keep the first
+    uniq = {}
+    for c in chunks:
+        uniq.setdefault(c[0], c)
+    return list(uniq.values())
