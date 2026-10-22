@@ -10,24 +10,24 @@ from vidseek.transcribe import get_transcript
 JOB = {"running": False, "total": 0, "done": 0, "failed": 0, "current": "", "stopped": None, "last_error": None}
 
 
-def index_video(v):
+def index_video(v, user_id):
     chunks = make_chunks(get_transcript(v["id"]), v["title"])
     if not chunks:
         raise ValueError("no usable transcript")
-    index.add_chunks(v, chunks, embed_passages([c[2] for c in chunks]))
+    index.add_chunks(v, chunks, embed_passages([c[2] for c in chunks]), user_id=user_id)
 
 
-def run_ingest(url):
+def run_ingest(url, user_id):
     try:
         vids = list_videos(url)
-        have = index.indexed_ids()
+        have = index.indexed_ids(user_id)
         JOB.update(total=len(vids), done=sum(v["id"] in have for v in vids))
         for v in [v for v in vids if v["id"] not in have][:MAX_PER_ADD]:
             JOB["current"] = v["title"]
             t0 = time.time()
             print(f"[{JOB['done']}/{JOB['total']}] {v['title']}", flush=True)
             try:
-                index_video(v)
+                index_video(v, user_id)
                 JOB["done"] += 1
                 print(f"   done in {time.time()-t0:.0f}s", flush=True)
             except Exception as e:
@@ -43,11 +43,11 @@ def run_ingest(url):
         JOB.update(running=False, current="")
 
 
-def start(url):
+def start(url, user_id):
     """-> False if a job is already running."""
     if JOB["running"]:
         return False
     JOB.update(running=True, total=0, done=0, failed=0, stopped=None, last_error=None,
                current="Playlist ki list nikal raha hai...")
-    threading.Thread(target=run_ingest, args=(url,), daemon=True).start()
+    threading.Thread(target=run_ingest, args=(url, user_id), daemon=True).start()
     return True

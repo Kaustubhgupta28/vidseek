@@ -1,5 +1,7 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en">
+<head>
+<meta charset="utf-8">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>VidSeek</title>
@@ -14,47 +16,276 @@ input,button{font:inherit;padding:10px 12px;border:1px solid var(--line);border-
 input{width:100%}button{cursor:pointer;background:var(--acc);color:#fff;border-color:var(--acc)}
 button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .row{display:flex;gap:8px;margin-bottom:10px}.row input{flex:1}
-#player{aspect-ratio:16/9;width:100%;background:#000;border-radius:6px}
+#player{aspect-ratio:16/9;width:100%;background:#000;border:0;border-radius:6px}
 .ans{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px;margin-top:14px;white-space:pre-wrap}
-.src{display:flex;gap:10px;align-items:flex-start;border-left:3px solid var(--acc);padding:6px 10px;margin:10px 0;background:var(--card)}
+.src{display:flex;gap:10px;align-items:flex-start;border-left:3px solid var(--acc);padding:6px 10px;margin:10px 0;background:var(--card);cursor:pointer}
 .src small{color:var(--mute);display:block}.src button{padding:4px 10px;white-space:nowrap}
 #status,#vids{color:var(--mute);font-size:.9rem}
-</style></head><body><div class="wrap">
-<section>
-  <h1>VidSeek</h1><p class="sub">Add a YouTube video or playlist, then ask your doubt.</p>
-  <div class="row" id="addrow"><input id="url" placeholder="Paste YouTube video or playlist link"><button onclick="add()">Add</button></div>
-  <progress id="bar" value="0" max="1" style="width:100%;display:none"></progress>
-  <div id="status"></div><div id="vids"></div>
-  <div class="row" style="margin-top:16px"><input id="q" placeholder="e.g. memoization aur tabulation ka difference?" onkeydown="if(event.key==='Enter')ask()"><button onclick="ask()">Ask</button></div>
-  <div id="out"></div>
-</section>
-<section><div id="player"></div></section>
+.auth-card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section>
+    <h1>VidSeek</h1>
+    <p class="sub">Add a YouTube video or playlist, then ask your doubt.</p>
+    
+    <!-- Auth Section -->
+    <div class="auth-card" id="auth-box">
+      <div id="auth-logged-out">
+        <div style="font-weight:bold;margin-bottom:8px">Account Login / Signup</div>
+        <div class="row" style="margin-bottom:8px">
+          <input id="auth-email" placeholder="Email">
+          <input id="auth-pass" type="password" placeholder="Password">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="handleLogin()" style="flex:1">Login</button>
+          <button onclick="handleSignup()" style="flex:1;background:var(--mute)">Sign Up</button>
+        </div>
+        <div id="auth-err" style="color:#d93838;font-size:0.85rem;margin-top:6px"></div>
+      </div>
+      <div id="auth-logged-in" style="display:none;align-items:center;justify-content:space-between">
+        <div>Logged in as: <b id="user-display"></b></div>
+        <button onclick="handleLogout()" style="padding:4px 10px;font-size:0.85rem">Logout</button>
+      </div>
+    </div>
+
+    <div class="row" id="addrow">
+      <input id="url" placeholder="Paste YouTube video or playlist link">
+      <button onclick="add()">Add</button>
+    </div>
+    <progress id="bar" value="0" max="1" style="width:100%;display:none"></progress>
+    <div id="status"></div>
+    <div id="vids"></div>
+    <div class="row" style="margin-top:16px">
+      <input id="q" placeholder="e.g. memoization aur tabulation ka difference?" onkeydown="if(event.key==='Enter')ask()">
+      <button onclick="ask()">Ask</button>
+    </div>
+    <div id="out"></div>
+  </section>
+  <section>
+    <iframe id="player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  </section>
 </div>
-<script src="https://www.youtube.com/iframe_api">api("/api/config").then(c=>{if(c.read_only){$("addrow").style.display="none";$("bar").style.display="none";$("status").style.display="none";document.querySelector("p.sub").textContent="Ask a doubt about the indexed DSA playlist and jump to the exact moment in the lecture."}}).catch(()=>{});
-</script>
+
 <script>
-let player,pending=null;
-function onYouTubeIframeAPIReady(){player=new YT.Player('player',{width:'100%',height:'100%',playerVars:{origin:location.origin,rel:0},events:{onReady:()=>{if(pending)jump(...pending)}}})}
-function jump(v,t){if(!player||!player.loadVideoById){pending=[v,t];return}player.loadVideoById({videoId:v,startSeconds:t})}
-const $=id=>document.getElementById(id);
-const fmt=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
-async function api(path,body){const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:undefined);
-  const j=await r.json();if(!r.ok)throw new Error(j.detail||"Something went wrong");return j}
-async function loadVids(){const v=await api("/api/videos");$("vids").textContent=v.length?`${v.length} video(s) indexed`:"No videos yet."}
-let timer=null;
-function render(p){const bar=$("bar");bar.style.display=p.total?"block":"none";bar.max=p.total||1;bar.value=p.done;
-  $("status").textContent=`${p.done}/${p.total} video done | ${p.failed} failed`+(p.current?` | abhi: ${p.current}`:"")+(p.stopped?` | ${p.stopped}`:"")+(p.last_error?` | last error: ${p.last_error}`:"")}
-function poll(){clearInterval(timer);timer=setInterval(async()=>{try{const p=await api("/api/progress");render(p);loadVids();if(!p.running){clearInterval(timer);$("status").textContent+=" | KHATAM"}}catch(e){}},3000)}
-async function add(){const url=$("url").value.trim();if(!url)return;$("status").textContent="Shuru ho raha hai...";
-  try{await api("/api/ingest",{url});poll()}catch(e){$("status").textContent=e.message}}
-async function ask(){const question=$("q").value.trim();if(!question)return;$("out").innerHTML="<p>Searching...</p>";
-  try{const r=await api("/api/ask",{question});const box=document.createElement("div");
-    const a=document.createElement("div");a.className="ans";a.textContent=r.answer;box.append(a);
-    r.sources.forEach((s,i)=>{const d=document.createElement("div");d.className="src";
-      d.innerHTML=`<div style="flex:1"><b>[${i+1}]</b> <span class="t"></span><small class="x"></small></div>`;
-      d.querySelector(".t").textContent=s.title;d.querySelector(".x").textContent=s.text.slice(0,140)+"...";
-      const b=document.createElement("button");b.textContent="Jump to "+fmt(s.start);b.onclick=()=>jump(s.vid,s.start);d.append(b);const o=document.createElement('a');o.href=s.link;o.target='_blank';o.rel='noopener';o.textContent='Open on YouTube';o.style.cssText='font-size:.85rem;color:var(--acc);white-space:nowrap;align-self:center';d.append(o);box.append(d)});
-    $("out").innerHTML="";$("out").append(box)}catch(e){$("out").textContent=e.message}}
+const $ = id => document.getElementById(id);
+const fmt = s => Math.floor(s/60) + ":" + String(s % 60).padStart(2, "0");
+
+function getYouTubeId(urlOrId) {
+  if (!urlOrId) return '';
+  if (urlOrId.length === 11 && !urlOrId.includes('/') && !urlOrId.includes('.')) return urlOrId;
+  const match = urlOrId.match(/(?:v=|v\/|embed\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : urlOrId;
+}
+
+function jump(v, t) {
+  const videoId = getYouTubeId(v);
+  if (!videoId) return;
+  const iframe = $("player");
+  iframe.src = `https://www.youtube.com/embed/${videoId}?start=${Math.floor(t)}&autoplay=1`;
+}
+
+async function api(path, body) {
+  const headers = {};
+  const token = localStorage.getItem("token");
+  if (token) { headers["Authorization"] = "Bearer " + token; }
+  
+  let opts = { headers };
+  if (body) {
+    headers["Content-Type"] = "application/json";
+    opts.method = "POST";
+    opts.body = JSON.stringify(body);
+  }
+  const r = await fetch(path, opts);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.detail || "Something went wrong");
+  return j;
+}
+
+function updateAuthUI() {
+  const token = localStorage.getItem("token");
+  const email = localStorage.getItem("user_email");
+  if (token) {
+    $("auth-logged-out").style.display = "none";
+    $("auth-logged-in").style.display = "flex";
+    $("user-display").textContent = email || "User";
+  } else {
+    $("auth-logged-out").style.display = "block";
+    $("auth-logged-in").style.display = "none";
+  }
+}
+
+async function handleLogin() {
+  const email = $("auth-email").value.trim();
+  const password = $("auth-pass").value.trim();
+  $("auth-err").textContent = "";
+  if (!email || !password) { $("auth-err").textContent = "Email aur password dono zaroori hain."; return; }
+  try {
+    const formData = new URLSearchParams();
+    formData.append('username', email);
+    formData.append('password', password);
+    const r = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || "Login failed");
+    localStorage.setItem("token", j.access_token);
+    localStorage.setItem("user_email", email);
+    
+    $("auth-email").value = "";
+    $("auth-pass").value = "";
+    $("url").value = "";
+    $("q").value = "";
+    $("out").innerHTML = "";
+
+    updateAuthUI();
+    loadVids();
+  } catch (e) { $("auth-err").textContent = e.message; }
+}
+
+async function handleSignup() {
+  const email = $("auth-email").value.trim();
+  const password = $("auth-pass").value.trim();
+  $("auth-err").textContent = "";
+  if (!email || !password) { $("auth-err").textContent = "Email aur password dono zaroori hain."; return; }
+  try {
+    const r = await fetch('/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || "Signup failed");
+    alert("Signup successful! Ab aap login kar sakte hain.");
+  } catch (e) { $("auth-err").textContent = e.message; }
+}
+
+function handleLogout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user_email");
+  
+  $("url").value = "";
+  $("q").value = "";
+  $("out").innerHTML = "";
+  $("vids").textContent = "";
+  $("status").textContent = "";
+  $("bar").style.display = "none";
+  $("player").src = "";
+
+  updateAuthUI();
+  loadVids();
+}
+
+async function loadVids() {
+  try {
+    const v = await api("/api/videos");
+    $("vids").textContent = v.length ? `${v.length} video(s) indexed` : "No videos yet.";
+  } catch (e) {
+    $("vids").textContent = "Login karke videos dekhein.";
+  }
+}
+
+let timer = null;
+function render(p) {
+  const bar = $("bar");
+  bar.style.display = p.total ? "block" : "none";
+  bar.max = p.total || 1;
+  bar.value = p.done;
+  $("status").textContent = `${p.done}/${p.total} video done | ${p.failed} failed` +
+    (p.current ? ` | abhi: ${p.current}` : "") +
+    (p.stopped ? ` | ${p.stopped}` : "") +
+    (p.last_error ? ` | last error: ${p.last_error}` : "");
+}
+
+function poll() {
+  clearInterval(timer);
+  timer = setInterval(async () => {
+    try {
+      const p = await api("/api/progress");
+      render(p);
+      loadVids();
+      if (!p.running) {
+        clearInterval(timer);
+        $("status").textContent += " | KHATAM";
+      }
+    } catch (e) {}
+  }, 3000);
+}
+
+async function add() {
+  const url = $("url").value.trim();
+  if (!url) return;
+  $("status").textContent = "Shuru ho raha hai...";
+  try {
+    await api("/api/ingest", { url });
+    poll();
+  } catch (e) {
+    $("status").textContent = e.message;
+  }
+}
+
+async function ask() {
+  const question = $("q").value.trim();
+  if (!question) return;
+  $("out").innerHTML = "<p>Searching...</p>";
+  try {
+    const r = await api("/api/ask", { question });
+    const box = document.createElement("div");
+    const a = document.createElement("div");
+    a.className = "ans";
+    a.textContent = r.answer;
+    box.append(a);
+
+    r.sources.forEach((s, i) => {
+      const d = document.createElement("div");
+      d.className = "src";
+      d.innerHTML = `<div style="flex:1"><b>[${i+1}]</b> <span class="t"></span><small class="x"></small></div>`;
+      d.querySelector(".t").textContent = s.title;
+      d.querySelector(".x").textContent = s.text.slice(0, 140) + "...";
+      
+      d.onclick = () => jump(s.vid, s.start);
+
+      const b = document.createElement("button");
+      b.textContent = "Jump to " + fmt(s.start);
+      b.onclick = (e) => { e.stopPropagation(); jump(s.vid, s.start); };
+      d.append(b);
+
+      const o = document.createElement('a');
+      o.href = s.link;
+      o.target = '_blank';
+      o.rel = 'noopener';
+      o.textContent = 'Open on YouTube';
+      o.style.cssText = 'font-size:.85rem;color:var(--acc);white-space:nowrap;align-self:center';
+      o.onclick = (e) => { e.stopPropagation(); };
+      d.append(o);
+
+      box.append(d);
+    });
+
+    $("out").innerHTML = "";
+    $("out").append(box);
+  } catch (e) {
+    $("out").textContent = e.message;
+  }
+}
+
+api("/api/config").then(c => {
+  if (c.read_only) {
+    $("addrow").style.display = "none";
+    $("bar").style.display = "none";
+    $("status").style.display = "none";
+    document.querySelector("p.sub").textContent = "Ask a doubt about the indexed DSA playlist and jump to the exact moment in the lecture.";
+  }
+}).catch(() => {});
+
+updateAuthUI();
 loadVids();
-api("/api/progress").then(p=>{if(p.running){render(p);poll()}}).catch(()=>{});
-</script></body></html>
+api("/api/progress").then(p => {
+  if (p.running) { render(p); poll(); }
+}).catch(() => {});
+</script>
+</body>
+</html>
