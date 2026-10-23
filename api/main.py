@@ -1,4 +1,5 @@
 from pathlib import Path
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -7,8 +8,6 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from pydantic import BaseModel
 
-from vidseek import index
-from vidseek.answer import ask_core
 from vidseek.config import READ_ONLY
 from vidseek.database import get_db, engine, Base
 from vidseek.models import User, Video
@@ -20,13 +19,15 @@ from vidseek.auth import (
     get_current_user
 )
 
-# Automatically create database tables if they don't exist
-Base.metadata.create_all(bind=engine)
+# Heavy imports and DB creation inside Lifespan to prevent startup freeze
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create DB tables safely on startup after port binding
+    Base.metadata.create_all(bind=engine)
+    yield
 
-if not READ_ONLY:
-    from vidseek import ingest
+app = FastAPI(title="VidSeek", lifespan=lifespan)
 
-app = FastAPI(title="VidSeek")
 STATIC = Path(__file__).parent / "static"
 IDLE = {"running": False, "total": 0, "done": 0, "failed": 0, "current": "", "stopped": None, "last_error": None}
 
@@ -62,6 +63,8 @@ def ingest_endpoint(body: Link, current_user: User = Depends(get_current_user), 
     if READ_ONLY:
         raise HTTPException(403, "Is demo me video add karna band hai.")
     
+    from vidseek import ingest
+    
     # Pass user_id to ingest so chunks are indexed specifically for this user
     if not ingest.start(body.url, user_id=current_user.id):
         raise HTTPException(409, "Ek process pehle se chal raha hai.")
@@ -78,7 +81,10 @@ def ingest_endpoint(body: Link, current_user: User = Depends(get_current_user), 
 
 @app.get("/api/progress")
 def progress():
-    return IDLE if READ_ONLY else ingest.JOB
+    if READ_ONLY:
+        return IDLE
+    from vidseek import ingest
+    return ingest.JOB
 
 
 @app.get("/api/videos")
@@ -93,6 +99,10 @@ def ask(body: Question, current_user: User = Depends(get_current_user), db: Sess
     user_video_count = db.query(Video).filter(Video.user_id == current_user.id).count()
     if user_video_count == 0:
         raise HTTPException(400, "Pehle koi video add karo.")
+    
+    # Lazy load heavy AI modules when user actually queries
+    from vidseek import index
+    from vidseek.answer import ask_core
     
     # Set active user context so answer searches only this user's vectors
     index.set_active_user(current_user.id)
