@@ -1,49 +1,28 @@
-import sys
-import traceback
+from pathlib import Path
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from datetime import timedelta
+from pydantic import BaseModel
 
-print(">>> STARTING IMPORT PHASE", flush=True)
+from vidseek.config import READ_ONLY
+from vidseek.database import get_db, engine, Base
+from vidseek.models import User, Video
+from vidseek.auth import (
+    get_password_hash,
+    verify_password,
+    create_access_token,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    get_current_user
+)
 
-try:
-    from pathlib import Path
-    from contextlib import asynccontextmanager
-    from fastapi import FastAPI, HTTPException, Depends, status
-    from fastapi.responses import HTMLResponse
-    from fastapi.staticfiles import StaticFiles
-    from fastapi.security import OAuth2PasswordRequestForm
-    from sqlalchemy.orm import Session
-    from datetime import timedelta
-    from pydantic import BaseModel
-    print(">>> BASIC FASTAPI IMPORTS DONE", flush=True)
-
-    from vidseek.config import READ_ONLY
-    from vidseek.database import get_db, engine, Base
-    from vidseek.models import User, Video
-    from vidseek.auth import (
-        get_password_hash,
-        verify_password,
-        create_access_token,
-        ACCESS_TOKEN_EXPIRE_MINUTES,
-        get_current_user
-    )
-    print(">>> VIDSEEK DB & AUTH IMPORTS DONE", flush=True)
-
-except Exception as e:
-    print(">>> CRITICAL IMPORT ERROR:", e, flush=True)
-    traceback.print_exc()
-    sys.exit(1)
-
-# Lifespan for startup safety
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(">>> LIFESPAN STARTUP BEGINNING", flush=True)
-    try:
-        Base.metadata.create_all(bind=engine)
-        print(">>> DATABASE TABLES CREATED", flush=True)
-    except Exception as e:
-        print(">>> DATABASE ERROR:", e, flush=True)
-        traceback.print_exc()
+    Base.metadata.create_all(bind=engine)
     yield
-    print(">>> LIFESPAN SHUTDOWN", flush=True)
 
 app = FastAPI(title="VidSeek", lifespan=lifespan)
 
@@ -168,5 +147,3 @@ def home():
         html = html.replace("Add a YouTube video or playlist, then ask your doubt.",
                             "Ask a doubt about the indexed DSA playlist and jump to the exact moment in the lecture.", 1)
     return HTMLResponse(html, headers={"Cache-Control": "no-store"})
-
-print(">>> APP INITIALIZED SUCCESSFULLY", flush=True)
