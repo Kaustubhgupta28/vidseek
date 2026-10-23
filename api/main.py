@@ -1,30 +1,49 @@
-from pathlib import Path
-from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Depends, status
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
-from datetime import timedelta
-from pydantic import BaseModel
+import sys
+import traceback
 
-from vidseek.config import READ_ONLY
-from vidseek.database import get_db, engine, Base
-from vidseek.models import User, Video
-from vidseek.auth import (
-    get_password_hash,
-    verify_password,
-    create_access_token,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    get_current_user
-)
+print(">>> STARTING IMPORT PHASE", flush=True)
 
-# Heavy imports and DB creation inside Lifespan to prevent startup freeze
+try:
+    from pathlib import Path
+    from contextlib import asynccontextmanager
+    from fastapi import FastAPI, HTTPException, Depends, status
+    from fastapi.responses import HTMLResponse
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.security import OAuth2PasswordRequestForm
+    from sqlalchemy.orm import Session
+    from datetime import timedelta
+    from pydantic import BaseModel
+    print(">>> BASIC FASTAPI IMPORTS DONE", flush=True)
+
+    from vidseek.config import READ_ONLY
+    from vidseek.database import get_db, engine, Base
+    from vidseek.models import User, Video
+    from vidseek.auth import (
+        get_password_hash,
+        verify_password,
+        create_access_token,
+        ACCESS_TOKEN_EXPIRE_MINUTES,
+        get_current_user
+    )
+    print(">>> VIDSEEK DB & AUTH IMPORTS DONE", flush=True)
+
+except Exception as e:
+    print(">>> CRITICAL IMPORT ERROR:", e, flush=True)
+    traceback.print_exc()
+    sys.exit(1)
+
+# Lifespan for startup safety
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create DB tables safely on startup after port binding
-    Base.metadata.create_all(bind=engine)
+    print(">>> LIFESPAN STARTUP BEGINNING", flush=True)
+    try:
+        Base.metadata.create_all(bind=engine)
+        print(">>> DATABASE TABLES CREATED", flush=True)
+    except Exception as e:
+        print(">>> DATABASE ERROR:", e, flush=True)
+        traceback.print_exc()
     yield
+    print(">>> LIFESPAN SHUTDOWN", flush=True)
 
 app = FastAPI(title="VidSeek", lifespan=lifespan)
 
@@ -64,12 +83,9 @@ def ingest_endpoint(body: Link, current_user: User = Depends(get_current_user), 
         raise HTTPException(403, "Is demo me video add karna band hai.")
     
     from vidseek import ingest
-    
-    # Pass user_id to ingest so chunks are indexed specifically for this user
     if not ingest.start(body.url, user_id=current_user.id):
         raise HTTPException(409, "Ek process pehle se chal raha hai.")
     
-    # Save video entry in DB linked to current user if not already present
     existing_video = db.query(Video).filter(Video.user_id == current_user.id, Video.url == body.url).first()
     if not existing_video:
         new_video = Video(user_id=current_user.id, url=body.url)
@@ -89,7 +105,6 @@ def progress():
 
 @app.get("/api/videos")
 def videos(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Return only the videos added by the currently logged-in user
     user_videos = db.query(Video).filter(Video.user_id == current_user.id).all()
     return [{"url": v.url, "title": v.title or v.url} for v in user_videos]
 
@@ -100,11 +115,9 @@ def ask(body: Question, current_user: User = Depends(get_current_user), db: Sess
     if user_video_count == 0:
         raise HTTPException(400, "Pehle koi video add karo.")
     
-    # Lazy load heavy AI modules when user actually queries
     from vidseek import index
     from vidseek.answer import ask_core
     
-    # Set active user context so answer searches only this user's vectors
     index.set_active_user(current_user.id)
     return ask_core(body.question)
 
@@ -155,3 +168,5 @@ def home():
         html = html.replace("Add a YouTube video or playlist, then ask your doubt.",
                             "Ask a doubt about the indexed DSA playlist and jump to the exact moment in the lecture.", 1)
     return HTMLResponse(html, headers={"Cache-Control": "no-store"})
+
+print(">>> APP INITIALIZED SUCCESSFULLY", flush=True)
